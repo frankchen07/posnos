@@ -1,22 +1,29 @@
 @import "tailwindcss";
 
+/* ─── Brand Tokens (matches boastcoffeeco-site) ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-brand-cream: #F7F3EE;
+  --color-brand-dark: #252444;
+  --color-brand-accent: #C9A86E;
+  --color-brand-muted: #6B5B4E;
+  --color-brand-border: #E4DAD0;
+  --color-brand-surface: #EDE7DF;
+
+  --background: var(--color-brand-cream);
+  --foreground: var(--color-brand-dark);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-cream: var(--color-brand-cream);
+  --color-espresso: var(--color-brand-dark);
+  --color-accent: var(--color-brand-accent);
+  --color-muted: var(--color-brand-muted);
+  --color-border: var(--color-brand-border);
+  --color-surface: var(--color-brand-surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
