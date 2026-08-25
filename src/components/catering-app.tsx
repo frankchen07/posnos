@@ -83,6 +83,10 @@ export function CateringApp() {
 
   async function endTimer() {
     if (!activeEventId) return;
+    const confirmed = window.confirm(
+      `End "${event?.name}"? This closes order entry for everyone.`
+    );
+    if (!confirmed) return;
     await fetch(`/api/events/${activeEventId}/end`, { method: "POST" });
     mutate();
   }
