@@ -9,6 +9,7 @@ import type { EventRow } from "@/lib/types";
 import { OrderModal } from "@/components/order-modal";
 import { LiveOrders } from "@/components/live-orders";
 import { SummaryView } from "@/components/summary-view";
+import { JoinEventList } from "@/components/join-event-list";
 
 const CATEGORIES = [
   { key: "milk", label: "Milk Drinks" },
@@ -165,6 +166,12 @@ export function CateringApp() {
           </div>
         )}
       </header>
+
+      {!activeEventId && (
+        <main className="flex-1 p-4">
+          <JoinEventList onJoin={setActiveEventId} />
+        </main>
+      )}
 
       {activeEventId && event && (
         <>
