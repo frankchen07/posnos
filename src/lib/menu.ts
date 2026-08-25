@@ -21,6 +21,28 @@ export const NO_TEMP_ITEMS = ["nitro_cold_brew"] as const;
 // Drinks with no extra shot option.
 export const NO_SHOTS_ITEMS = ["hot_chocolate"] as const;
 
+// Default espresso shot count baked into each drink. Nitro Cold Brew has no
+// baseline shot — extra shots on it are called out as a standalone add-on
+// instead of a DBL/TRP/QUAD multiplier.
+export const DEFAULT_SHOTS: Partial<Record<string, number>> = {
+  vanilla_latte: 1,
+  latte: 1,
+  mocha_latte: 1,
+  cappuccino: 2,
+  flat_white: 2,
+  cortado: 1,
+  americano: 1,
+  espresso: 1,
+  matcha_latte: 1,
+};
+
+function shotMultiplierLabel(totalShots: number): string {
+  if (totalShots === 2) return "DBL";
+  if (totalShots === 3) return "TRP";
+  if (totalShots === 4) return "QUAD";
+  return `${totalShots}X`;
+}
+
 // Drinks with no Decaf / Boast Style mods.
 export const NO_MODS_ITEMS = ["hot_chocolate"] as const;
 
@@ -69,14 +91,21 @@ export function buildAbbreviation(sel: OrderSelection): string {
   const item = ITEMS.find((i) => i.key === sel.item);
   const milk = sel.milk ? MILKS.find((m) => m.key === sel.milk) : null;
   const syrup = sel.syrup ? SYRUPS.find((s) => s.key === sel.syrup) : null;
+  const itemAbbr = item?.abbr ?? sel.item;
+  const defaultShots = DEFAULT_SHOTS[sel.item];
 
   const lines: string[] = [];
-  lines.push(
-    sel.temp === "iced" ? `ICED ${item?.abbr ?? sel.item}` : item?.abbr ?? sel.item
-  );
+
+  if (sel.shotsAdded > 0 && defaultShots != null) {
+    const label = shotMultiplierLabel(defaultShots + sel.shotsAdded);
+    lines.push(sel.temp === "iced" ? `ICED ${label} ${itemAbbr}` : `${label} ${itemAbbr}`);
+  } else {
+    lines.push(sel.temp === "iced" ? `ICED ${itemAbbr}` : itemAbbr);
+  }
+
   if (milk) lines.push(milk.abbr);
-  if (sel.shotsAdded > 0) {
-    lines.push(sel.shotsAdded === 1 ? "+SHOT" : `+${sel.shotsAdded}SHOT`);
+  if (sel.shotsAdded > 0 && defaultShots == null) {
+    lines.push(sel.shotsAdded === 1 ? "+SINGLE" : "+DOUBLE");
   }
   if (syrup) lines.push(`+${syrup.abbr}`);
   if (sel.decaf) lines.push("DECAF");

@@ -209,7 +209,7 @@ export function CateringApp() {
                             key={item.key}
                             type="button"
                             onClick={() => setModalItem(item.key)}
-                            className="rounded-2xl border-2 border-border bg-white py-6 text-lg font-semibold text-espresso shadow-sm active:bg-surface"
+                            className="rounded-2xl border-2 border-border bg-white px-2 py-6 text-lg font-semibold text-espresso shadow-sm active:bg-surface"
                           >
                             {item.label}
                           </button>

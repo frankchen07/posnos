@@ -30,7 +30,7 @@ function OptionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl border-2 px-2 py-2 text-base font-medium transition-colors ${
+      className={`rounded-xl border-2 px-2 py-1.5 text-base font-medium transition-colors ${
         active
           ? "border-espresso bg-espresso text-cream"
           : "border-border bg-white text-espresso active:bg-surface"
@@ -129,7 +129,7 @@ export function OrderModal({
                   active={shotsAdded === n}
                   onClick={() => setShotsAdded((cur) => (cur === n ? 0 : n))}
                 >
-                  {`+${n} Shot${n > 1 ? "s" : ""}`}
+                  {n === 1 ? "Extra Single" : "Extra Double"}
                 </OptionButton>
               ))}
             </div>
