@@ -10,6 +10,12 @@ import { OrderModal } from "@/components/order-modal";
 import { LiveOrders } from "@/components/live-orders";
 import { SummaryView } from "@/components/summary-view";
 
+const CATEGORIES = [
+  { key: "milk", label: "Milk Drinks" },
+  { key: "non-milk", label: "Non-Milk Drinks" },
+  { key: "non-coffee", label: "Non-Coffee Drinks" },
+] as const;
+
 function useElapsed(startTime: string | null, endTime: string | null) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -184,16 +190,25 @@ export function CateringApp() {
                   Event has ended. Order entry is closed.
                 </p>
               ) : event.startTime ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {ITEMS.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setModalItem(item.key)}
-                      className="rounded-2xl border-2 border-border bg-white py-6 text-lg font-semibold text-espresso shadow-sm active:bg-surface"
-                    >
-                      {item.label}
-                    </button>
+                <div className="space-y-6">
+                  {CATEGORIES.map((cat) => (
+                    <div key={cat.key}>
+                      <h3 className="mb-2 text-sm font-semibold uppercase text-muted">
+                        {cat.label}
+                      </h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        {ITEMS.filter((item) => item.category === cat.key).map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => setModalItem(item.key)}
+                            className="rounded-2xl border-2 border-border bg-white py-6 text-lg font-semibold text-espresso shadow-sm active:bg-surface"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (

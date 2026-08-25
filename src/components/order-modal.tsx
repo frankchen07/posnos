@@ -30,7 +30,7 @@ function OptionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl border-2 px-4 py-4 text-lg font-medium transition-colors ${
+      className={`rounded-xl border-2 px-2 py-2 text-base font-medium transition-colors ${
         active
           ? "border-espresso bg-espresso text-cream"
           : "border-border bg-white text-espresso active:bg-surface"
@@ -76,9 +76,9 @@ export function OrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-y-auto rounded-t-3xl bg-white p-6 sm:rounded-3xl">
+      <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-y-auto rounded-t-3xl bg-white p-3 sm:rounded-3xl sm:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-espresso">{item.label}</h2>
+          <h2 className="text-xl font-bold text-espresso">{item.label}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -89,9 +89,9 @@ export function OrderModal({
         </div>
 
         {showTemp && (
-          <section className="mt-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase text-muted">Temp</h3>
-            <div className="grid grid-cols-2 gap-3">
+          <section className="mt-3">
+            <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Temp</h3>
+            <div className="grid grid-cols-3 gap-2">
               <OptionButton active={temp === "hot"} onClick={() => setTemp("hot")}>
                 Hot
               </OptionButton>
@@ -102,11 +102,11 @@ export function OrderModal({
           </section>
         )}
 
-        <section className="mt-6">
-          <h3 className="mb-2 text-sm font-semibold uppercase text-muted">
+        <section className="mt-3">
+          <h3 className="mb-1 text-sm font-semibold uppercase text-muted">
             {milkRequired ? "Milk" : "Add Milk"}
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {MILKS.map((m) => (
               <OptionButton
                 key={m.key}
@@ -120,9 +120,9 @@ export function OrderModal({
         </section>
 
         {showShots && (
-          <section className="mt-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase text-muted">Extra Shots</h3>
-            <div className="grid grid-cols-2 gap-3">
+          <section className="mt-3">
+            <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Shots</h3>
+            <div className="grid grid-cols-3 gap-2">
               {[1, 2].map((n) => (
                 <OptionButton
                   key={n}
@@ -136,9 +136,9 @@ export function OrderModal({
           </section>
         )}
 
-        <section className="mt-6">
-          <h3 className="mb-2 text-sm font-semibold uppercase text-muted">Extra Syrup</h3>
-          <div className="grid grid-cols-2 gap-3">
+        <section className="mt-3">
+          <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Syrup</h3>
+          <div className="grid grid-cols-3 gap-2">
             {SYRUPS.map((s) => (
               <OptionButton
                 key={s.key}
@@ -152,9 +152,9 @@ export function OrderModal({
         </section>
 
         {showMods && (
-          <section className="mt-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase text-muted">Mods</h3>
-            <div className="grid grid-cols-2 gap-3">
+          <section className="mt-3">
+            <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Mods</h3>
+            <div className="grid grid-cols-3 gap-2">
               <OptionButton active={decaf} onClick={() => setDecaf((d) => !d)}>
                 Decaf
               </OptionButton>
@@ -165,14 +165,14 @@ export function OrderModal({
           </section>
         )}
 
-        <div className="mt-6 rounded-xl bg-espresso px-4 py-3 text-center font-mono text-xl tracking-wide text-cream">
+        <div className="mt-3 rounded-xl bg-espresso px-4 py-2 text-center font-mono text-xl tracking-wide text-cream">
           {preview}
         </div>
 
         <button
           type="button"
           onClick={() => onSubmit(selection)}
-          className="mt-4 w-full rounded-2xl bg-emerald-600 py-5 text-xl font-bold text-white active:bg-emerald-700"
+          className="mt-2 w-full rounded-2xl bg-emerald-600 py-4 text-xl font-bold text-white active:bg-emerald-700"
         >
           Done
         </button>

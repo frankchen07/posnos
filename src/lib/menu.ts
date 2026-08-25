@@ -1,15 +1,15 @@
 export const ITEMS = [
-  { key: "latte", label: "Latte", abbr: "L" },
-  { key: "vanilla_latte", label: "Vanilla Latte", abbr: "VL" },
-  { key: "mocha_latte", label: "Mocha Latte", abbr: "ML" },
-  { key: "matcha_latte", label: "Matcha Latte", abbr: "MTL" },
-  { key: "cappuccino", label: "Cappuccino", abbr: "CAP" },
-  { key: "flat_white", label: "Flat White", abbr: "FW" },
-  { key: "cortado", label: "Cortado", abbr: "CT" },
-  { key: "espresso", label: "Espresso", abbr: "ESP" },
-  { key: "americano", label: "Americano", abbr: "AM" },
-  { key: "nitro_cold_brew", label: "Nitro Cold Brew", abbr: "NCB" },
-  { key: "hot_chocolate", label: "Hot Chocolate", abbr: "HC" },
+  { key: "vanilla_latte", label: "Vanilla Latte", abbr: "VL", category: "milk" },
+  { key: "latte", label: "Latte", abbr: "L", category: "milk" },
+  { key: "mocha_latte", label: "Mocha Latte", abbr: "ML", category: "milk" },
+  { key: "cappuccino", label: "Cappuccino", abbr: "CAP", category: "milk" },
+  { key: "flat_white", label: "Flat White", abbr: "FW", category: "milk" },
+  { key: "cortado", label: "Cortado", abbr: "CT", category: "milk" },
+  { key: "americano", label: "Americano", abbr: "AM", category: "non-milk" },
+  { key: "espresso", label: "Espresso", abbr: "ESP", category: "non-milk" },
+  { key: "nitro_cold_brew", label: "Nitro Cold Brew", abbr: "NCB", category: "non-milk" },
+  { key: "matcha_latte", label: "Matcha Latte", abbr: "MTL", category: "non-coffee" },
+  { key: "hot_chocolate", label: "Hot Chocolate", abbr: "HC", category: "non-coffee" },
 ] as const;
 
 // Drinks with no default milk — milk is an optional add-on instead of a required choice.
@@ -26,14 +26,14 @@ export const NO_MODS_ITEMS = ["hot_chocolate"] as const;
 
 export const MILKS = [
   { key: "whole", label: "Whole Milk", abbr: "WM" },
-  { key: "almond", label: "Almond Milk", abbr: "A" },
   { key: "oat", label: "Oat Milk", abbr: "O" },
+  { key: "almond", label: "Almond Milk", abbr: "A" },
 ] as const;
 
 export const SYRUPS = [
   { key: "vanilla", label: "Vanilla", abbr: "VS" },
-  { key: "mocha", label: "Mocha", abbr: "MS" },
   { key: "maple_bourbon", label: "Maple Bourbon", abbr: "MB" },
+  { key: "mocha", label: "Mocha", abbr: "MS" },
 ] as const;
 
 export type ItemKey = (typeof ITEMS)[number]["key"];
