@@ -9,6 +9,7 @@ import {
   NO_TEMP_ITEMS,
   NO_SHOTS_ITEMS,
   NO_MODS_ITEMS,
+  SWEET_ITEMS,
   buildAbbreviation,
   type ItemKey,
   type MilkKey,
@@ -55,6 +56,8 @@ export function OrderModal({
   const milkRequired = !(MILK_OPTIONAL_ITEMS as readonly string[]).includes(itemKey);
   const showShots = !(NO_SHOTS_ITEMS as readonly string[]).includes(itemKey);
   const showMods = !(NO_MODS_ITEMS as readonly string[]).includes(itemKey);
+  const isSweetItem = (SWEET_ITEMS as readonly string[]).includes(itemKey);
+  const visibleSyrups = SYRUPS.filter((s) => s.key !== "less_sweet" || isSweetItem);
 
   const [temp, setTemp] = useState<Temp>(showTemp ? "hot" : "iced");
   const [milk, setMilk] = useState<MilkKey | null>(null);
@@ -139,7 +142,7 @@ export function OrderModal({
         <section className="mt-3">
           <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Syrup</h3>
           <div className="grid grid-cols-3 gap-2">
-            {SYRUPS.map((s) => (
+            {visibleSyrups.map((s) => (
               <OptionButton
                 key={s.key}
                 active={syrup === s.key}

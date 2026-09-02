@@ -10,10 +10,11 @@ export const ITEMS = [
   { key: "nitro_cold_brew", label: "Nitro Cold Brew", abbr: "NCB", category: "non-milk" },
   { key: "matcha_latte", label: "Matcha Latte", abbr: "MTL", category: "non-coffee" },
   { key: "hot_chocolate", label: "Hot Chocolate", abbr: "HC", category: "non-coffee" },
+  { key: "tea", label: "Tea", abbr: "TEA", category: "non-coffee" },
 ] as const;
 
 // Drinks with no default milk — milk is an optional add-on instead of a required choice.
-export const MILK_OPTIONAL_ITEMS = ["espresso", "americano", "nitro_cold_brew"] as const;
+export const MILK_OPTIONAL_ITEMS = ["espresso", "americano", "nitro_cold_brew", "tea"] as const;
 
 // Drinks served only one way — no Hot/Iced toggle shown.
 export const NO_TEMP_ITEMS = ["nitro_cold_brew"] as const;
@@ -44,7 +45,10 @@ function shotMultiplierLabel(totalShots: number): string {
 }
 
 // Drinks with no Decaf / Boast Style mods.
-export const NO_MODS_ITEMS = ["hot_chocolate"] as const;
+export const NO_MODS_ITEMS = ["hot_chocolate", "tea"] as const;
+
+// Drinks sweet enough to offer a "Less Sweet" syrup option.
+export const SWEET_ITEMS = ["matcha_latte", "mocha_latte", "vanilla_latte"] as const;
 
 export const MILKS = [
   { key: "whole", label: "Whole Milk", abbr: "WM" },
@@ -56,6 +60,7 @@ export const SYRUPS = [
   { key: "vanilla", label: "Vanilla", abbr: "VS" },
   { key: "maple_bourbon", label: "Maple Bourbon", abbr: "MB" },
   { key: "mocha", label: "Mocha", abbr: "MS" },
+  { key: "less_sweet", label: "Less Sweet", abbr: "LS" },
 ] as const;
 
 export type ItemKey = (typeof ITEMS)[number]["key"];
