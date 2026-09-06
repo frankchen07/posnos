@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { events, orders } from "@/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { events, orders, materialCounts } from "@/db/schema";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { MILKS, type ItemKey, type MilkKey } from "@/lib/menu";
+import { MILK_OZ_PER_DRINK, MILK_CONTAINER_OZ, milkMaterialKey } from "@/lib/materials";
 
 export async function GET(
   _req: NextRequest,
@@ -51,6 +53,47 @@ export async function GET(
     .from(orders)
     .where(notDeleted);
 
+  const byItemMilk = await db
+    .select({
+      item: orders.item,
+      milk: orders.milk,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(orders)
+    .where(and(notDeleted, isNotNull(orders.milk)))
+    .groupBy(orders.item, orders.milk);
+
+  const manualCounts = await db
+    .select({
+      materialKey: materialCounts.materialKey,
+      containersUsed: materialCounts.containersUsed,
+    })
+    .from(materialCounts)
+    .where(eq(materialCounts.eventId, id));
+  const manualByKey = new Map(
+    manualCounts.map((row) => [row.materialKey, Number(row.containersUsed)])
+  );
+
+  const milkMaterials = MILKS.map((m) => {
+    const key = m.key as MilkKey;
+    const calculatedOz = byItemMilk
+      .filter((row) => row.milk === key)
+      .reduce(
+        (sum, row) => sum + row.count * (MILK_OZ_PER_DRINK[row.item as ItemKey] ?? 0),
+        0
+      );
+    const containerOz = MILK_CONTAINER_OZ[key];
+    const materialKey = milkMaterialKey(key);
+    return {
+      key,
+      label: m.label,
+      calculatedOz,
+      containerOz,
+      calculatedContainers: calculatedOz / containerOz,
+      manualContainers: manualByKey.get(materialKey) ?? null,
+    };
+  });
+
   return NextResponse.json({
     event,
     total: totals?.total ?? 0,
@@ -61,5 +104,6 @@ export async function GET(
     byMilk,
     bySyrup,
     byTemp,
+    materials: { milk: milkMaterials },
   });
 }

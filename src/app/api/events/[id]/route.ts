@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { events, orders } from "@/db/schema";
+import { events, orders, materialCounts } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -23,6 +23,7 @@ export async function DELETE(
   const { id } = await params;
   const db = getDb();
   await db.delete(orders).where(eq(orders.eventId, id));
+  await db.delete(materialCounts).where(eq(materialCounts.eventId, id));
   await db.delete(events).where(eq(events.id, id));
   return NextResponse.json({ ok: true });
 }

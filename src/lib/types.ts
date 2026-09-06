@@ -43,4 +43,16 @@ export interface SummaryResponse {
   byMilk: SummaryCount[];
   bySyrup: SummaryCount[];
   byTemp: SummaryCount[];
+  materials: {
+    milk: MilkMaterialRow[];
+  };
+}
+
+export interface MilkMaterialRow {
+  key: string;
+  label: string;
+  calculatedOz: number;
+  containerOz: number;
+  calculatedContainers: number;
+  manualContainers: number | null;
 }

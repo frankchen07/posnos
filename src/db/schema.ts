@@ -5,6 +5,7 @@ import {
   boolean,
   timestamp,
   date,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 export const events = pgTable("events", {
@@ -37,4 +38,19 @@ export const orders = pgTable("orders", {
   boastStyle: boolean("boast_style").notNull().default(false),
   abbreviation: text("abbreviation").notNull(),
   deleted: boolean("deleted").notNull().default(false),
+});
+
+export const materialCounts = pgTable("material_counts", {
+  id: text("id").primaryKey(), // `${eventId}-${materialKey}`
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id),
+  materialKey: text("material_key").notNull(), // e.g. "milk_whole"
+  containersUsed: numeric("containers_used", {
+    precision: 6,
+    scale: 2,
+  }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
