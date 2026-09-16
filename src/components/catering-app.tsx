@@ -77,8 +77,13 @@ export function CateringApp() {
 
   async function startTimer() {
     if (!activeEventId) return;
-    await fetch(`/api/events/${activeEventId}/start`, { method: "POST" });
-    mutate();
+    try {
+      const res = await fetch(`/api/events/${activeEventId}/start`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      mutate();
+    } catch {
+      window.alert("Failed to start event — try again.");
+    }
   }
 
   async function endTimer() {
@@ -87,8 +92,13 @@ export function CateringApp() {
       `End "${event?.name}"? This closes order entry for everyone.`
     );
     if (!confirmed) return;
-    await fetch(`/api/events/${activeEventId}/end`, { method: "POST" });
-    mutate();
+    try {
+      const res = await fetch(`/api/events/${activeEventId}/end`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      mutate();
+    } catch {
+      window.alert("Failed to end event — try again.");
+    }
   }
 
   async function submitOrder(selection: OrderSelection) {
