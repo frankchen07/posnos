@@ -26,6 +26,7 @@ export function EventHistory() {
     null
   );
   const [pendingDelete, setPendingDelete] = useState<EventListRow | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const events = data?.events ?? [];
@@ -42,6 +43,24 @@ export function EventHistory() {
       mutate();
     } catch (err) {
       setError(`Couldn't delete "${ev.name}" — ${failureText(err)}. Try again.`);
+    }
+  }
+
+  async function saveRename(ev: EventListRow) {
+    const name = editing?.name.trim();
+    if (!name || name === ev.name) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/events/${ev.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
+      setEditing(null);
+      mutate();
+    } catch (err) {
+      setError(`Couldn't rename "${ev.name}" — ${failureText(err)}. Try again.`);
     }
   }
 
@@ -82,25 +101,65 @@ export function EventHistory() {
           <ul className="space-y-3">
             {events.map((ev) => (
               <li key={ev.id} className="rounded-2xl border border-border bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-bold text-espresso">{ev.name}</div>
-                    <div className="text-xs text-muted">
-                      {formatDate(ev.eventDate)} · {ev.orderCount} order
-                      {ev.orderCount === 1 ? "" : "s"}
-                      {!ev.startTime && " · not started"}
-                      {ev.startTime && !ev.endTime && " · in progress"}
-                    </div>
-                    <div className="text-xs text-muted/60">{ev.id}</div>
+                {editing?.id === ev.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editing.name}
+                      onChange={(e) => setEditing({ id: ev.id, name: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveRename(ev);
+                        if (e.key === "Escape") setEditing(null);
+                      }}
+                      className="min-h-11 min-w-0 flex-1 rounded-lg border border-border px-3 py-2 font-bold text-espresso"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setEditing(null)}
+                      className="min-h-11 shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-espresso active:bg-surface"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveRename(ev)}
+                      disabled={!editing.name.trim() || editing.name.trim() === ev.name}
+                      className="min-h-11 shrink-0 rounded-lg bg-espresso px-3 py-2 text-sm font-medium text-cream disabled:opacity-40"
+                    >
+                      Save
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setPendingDelete(ev)}
-                    className="min-h-11 shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 active:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-bold text-espresso">{ev.name}</div>
+                      <div className="text-xs text-muted">
+                        {formatDate(ev.eventDate)} · {ev.orderCount} order
+                        {ev.orderCount === 1 ? "" : "s"}
+                        {!ev.startTime && " · not started"}
+                        {ev.startTime && !ev.endTime && " · in progress"}
+                      </div>
+                      <div className="text-xs text-muted/60">{ev.id}</div>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditing({ id: ev.id, name: ev.name })}
+                        className="min-h-11 rounded-lg border border-border px-3 py-2 text-sm font-medium text-espresso active:bg-surface"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete(ev)}
+                        className="min-h-11 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 active:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-3 flex gap-2">
                   <button
