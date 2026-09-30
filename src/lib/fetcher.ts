@@ -3,3 +3,7 @@ export async function fetcher<T>(url: string): Promise<T> {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();
 }
+
+export function failureText(err: unknown) {
+  return err instanceof Error ? err.message : "network error";
+}

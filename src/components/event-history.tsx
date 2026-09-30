@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher, failureText } from "@/lib/fetcher";
 import type { EventListRow } from "@/lib/types";
 import { LiveOrders } from "@/components/live-orders";
 import { SummaryView } from "@/components/summary-view";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function formatDate(dateString: string) {
   return new Date(`${dateString}T00:00:00`).toLocaleDateString([], {
@@ -24,17 +25,24 @@ export function EventHistory() {
   const [expanded, setExpanded] = useState<{ id: string; view: "live" | "summary" } | null>(
     null
   );
+  const [pendingDelete, setPendingDelete] = useState<EventListRow | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const events = data?.events ?? [];
 
-  async function handleDelete(ev: EventListRow) {
-    const confirmed = window.confirm(
-      `Delete "${ev.name}" (${formatDate(ev.eventDate)}) and all ${ev.orderCount} order(s)? This cannot be undone.`
-    );
-    if (!confirmed) return;
-    await fetch(`/api/events/${ev.id}`, { method: "DELETE" });
-    if (expanded?.id === ev.id) setExpanded(null);
-    mutate();
+  async function confirmDelete() {
+    const ev = pendingDelete;
+    if (!ev) return;
+    setPendingDelete(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/events/${ev.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
+      if (expanded?.id === ev.id) setExpanded(null);
+      mutate();
+    } catch (err) {
+      setError(`Couldn't delete "${ev.name}" — ${failureText(err)}. Try again.`);
+    }
   }
 
   function toggle(id: string, view: "live" | "summary") {
@@ -42,12 +50,27 @@ export function EventHistory() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col bg-cream">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white px-4 py-3">
-        <h1 className="text-lg font-bold text-espresso">Past Events</h1>
-        <Link href="/" className="text-sm text-muted underline">
-          Back
-        </Link>
+    <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col bg-cream">
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold text-espresso">Past Events</h1>
+          <Link href="/" className="text-sm text-muted underline">
+            Back
+          </Link>
+        </div>
+
+        {error && (
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="shrink-0 text-sm font-medium text-red-700 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 p-4">
@@ -72,8 +95,8 @@ export function EventHistory() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleDelete(ev)}
-                    className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 active:bg-red-50"
+                    onClick={() => setPendingDelete(ev)}
+                    className="min-h-11 shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 active:bg-red-50"
                   >
                     Delete
                   </button>
@@ -118,6 +141,16 @@ export function EventHistory() {
           </ul>
         )}
       </main>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete this event?"
+          body={`Delete "${pendingDelete.name}" (${formatDate(pendingDelete.eventDate)}) and all ${pendingDelete.orderCount} order(s)? This cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </div>
   );
 }

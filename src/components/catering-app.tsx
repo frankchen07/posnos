@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate as globalMutate } from "swr";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher, failureText } from "@/lib/fetcher";
 import { ITEMS, type ItemKey, type OrderSelection } from "@/lib/menu";
 import type { EventRow } from "@/lib/types";
 import { OrderModal } from "@/components/order-modal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { LiveOrders } from "@/components/live-orders";
 import { SummaryView } from "@/components/summary-view";
 import { JoinEventList } from "@/components/join-event-list";
@@ -44,6 +45,8 @@ export function CateringApp() {
   const [creating, setCreating] = useState(false);
   const [tab, setTab] = useState<"order" | "live" | "summary">("order");
   const [modalItem, setModalItem] = useState<ItemKey | null>(null);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data, mutate } = useSWR<{ event: EventRow }>(
     activeEventId ? `/api/events/${activeEventId}` : null,
@@ -56,6 +59,8 @@ export function CateringApp() {
   function switchEvent() {
     setActiveEventId(null);
     setNameInput("");
+    setConfirmingEnd(false);
+    setError(null);
   }
 
   async function createOrJoinEvent() {
@@ -77,27 +82,30 @@ export function CateringApp() {
 
   async function startTimer() {
     if (!activeEventId) return;
+    setError(null);
     try {
       const res = await fetch(`/api/events/${activeEventId}/start`, { method: "POST" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
       mutate();
-    } catch {
-      window.alert("Failed to start event — try again.");
+    } catch (err) {
+      setError(`Couldn't start the event — ${failureText(err)}. Try again.`);
     }
   }
 
-  async function endTimer() {
+  async function confirmEnd() {
     if (!activeEventId) return;
-    const confirmed = window.confirm(
-      `End "${event?.name}"? This closes order entry for everyone.`
-    );
-    if (!confirmed) return;
+    setConfirmingEnd(false);
+    if (event?.endTime) {
+      setError("That event was already ended on another device.");
+      return;
+    }
+    setError(null);
     try {
       const res = await fetch(`/api/events/${activeEventId}/end`, { method: "POST" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
       mutate();
-    } catch {
-      window.alert("Failed to end event — try again.");
+    } catch (err) {
+      setError(`Couldn't end the event — ${failureText(err)}. Try again.`);
     }
   }
 
@@ -114,7 +122,7 @@ export function CateringApp() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col bg-cream">
+    <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col bg-cream">
       <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
         {!activeEventId || !event ? (
           <div>
@@ -139,12 +147,12 @@ export function CateringApp() {
             </Link>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="font-bold text-espresso">{event.name}</div>
-              <div className="text-xs text-muted">{event.id}</div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="w-full min-w-0 sm:w-auto">
+              <div className="truncate font-bold text-espresso">{event.name}</div>
+              <div className="truncate text-xs text-muted">{event.id}</div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               {elapsed && (
                 <span className="font-mono text-lg font-semibold text-espresso">{elapsed}</span>
               )}
@@ -152,7 +160,7 @@ export function CateringApp() {
                 <button
                   type="button"
                   onClick={startTimer}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
+                  className="min-h-11 shrink-0 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
                 >
                   Start
                 </button>
@@ -160,8 +168,8 @@ export function CateringApp() {
               {event.startTime && !event.endTime && (
                 <button
                   type="button"
-                  onClick={endTimer}
-                  className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white"
+                  onClick={() => setConfirmingEnd(true)}
+                  className="min-h-11 shrink-0 rounded-lg bg-red-600 px-4 py-2 font-medium text-white"
                 >
                   End
                 </button>
@@ -177,6 +185,19 @@ export function CateringApp() {
                 New event
               </button>
             </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="shrink-0 text-sm font-medium text-red-700 underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
       </header>
@@ -241,6 +262,16 @@ export function CateringApp() {
             {tab === "summary" && <SummaryView eventId={activeEventId} />}
           </main>
         </>
+      )}
+
+      {confirmingEnd && event?.startTime && !event.endTime && (
+        <ConfirmDialog
+          title="End this event?"
+          body={`Ending "${event.name}" closes order entry for everyone.`}
+          confirmLabel="End event"
+          onConfirm={confirmEnd}
+          onCancel={() => setConfirmingEnd(false)}
+        />
       )}
 
       {modalItem && (
