@@ -95,7 +95,7 @@ function MaterialRow({
           onBlur={save}
           disabled={saving}
           placeholder="actual"
-          className="w-20 rounded-lg border-2 border-border px-2 py-1 text-right font-mono text-espresso"
+          className="w-28 rounded-lg border-2 border-border px-2 py-1 text-right font-mono text-espresso"
         />
       </div>
       <div className="flex items-center justify-between text-sm text-muted">

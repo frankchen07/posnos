@@ -168,16 +168,16 @@ export function CateringApp({ initialEventId }: { initialEventId: string | null 
               <input
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="Catering event name"
-                className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-lg text-espresso placeholder:text-muted"
+                placeholder="Enter catering event name"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-white px-3 py-2 text-base text-espresso placeholder:text-muted"
               />
               <button
                 type="button"
                 disabled={creating || !nameInput.trim()}
                 onClick={createOrJoinEvent}
-                className="rounded-lg bg-espresso px-4 py-2 font-medium text-cream disabled:opacity-40"
+                className="shrink-0 rounded-lg bg-espresso px-4 py-2 font-medium text-cream disabled:opacity-40"
               >
-                Go
+                Create event
               </button>
             </div>
             <Link href="/history" className="mt-2 inline-block text-sm text-muted underline">
