@@ -1,6 +1,14 @@
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number) {
+    super(`Request failed: ${status}`);
+    this.status = status;
+  }
+}
+
 export async function fetcher<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  if (!res.ok) throw new HttpError(res.status);
   return res.json();
 }
 

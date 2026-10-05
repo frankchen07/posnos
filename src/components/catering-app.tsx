@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate as globalMutate } from "swr";
-import { fetcher, failureText } from "@/lib/fetcher";
+import { fetcher, failureText, HttpError } from "@/lib/fetcher";
 import { ITEMS, type ItemKey, type OrderSelection } from "@/lib/menu";
 import type { EventRow } from "@/lib/types";
 import { OrderModal } from "@/components/order-modal";
@@ -39,27 +39,54 @@ function useElapsed(startTime: string | null, endTime: string | null) {
     .padStart(2, "0")}`;
 }
 
-export function CateringApp() {
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+export function CateringApp({ initialEventId }: { initialEventId: string | null }) {
+  const [activeEventId, setActiveEventId] = useState<string | null>(initialEventId);
   const [nameInput, setNameInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [tab, setTab] = useState<"order" | "live" | "summary">("order");
   const [modalItem, setModalItem] = useState<ItemKey | null>(null);
   const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data, mutate } = useSWR<{ event: EventRow }>(
+  const { data, error: loadError, mutate } = useSWR<{ event: EventRow }>(
     activeEventId ? `/api/events/${activeEventId}` : null,
     fetcher,
-    { refreshInterval: 3000 }
+    {
+      refreshInterval: 3000,
+      onError: (err) => {
+        if (err instanceof HttpError && err.status === 404) {
+          switchEvent();
+          setError("That event no longer exists.");
+        }
+      },
+    }
   );
   const event = data?.event ?? null;
   const elapsed = useElapsed(event?.startTime ?? null, event?.endTime ?? null);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  // Keep the active event in the URL so a reload or a discarded tab lands
+  // back on the same event instead of the join screen.
+  function openEvent(id: string) {
+    setActiveEventId(id);
+    window.history.replaceState(null, "", `?event=${encodeURIComponent(id)}`);
+  }
+
   function switchEvent() {
     setActiveEventId(null);
+    window.history.replaceState(null, "", "/");
     setNameInput("");
     setConfirmingEnd(false);
+    setMenuOpen(false);
     setError(null);
   }
 
@@ -67,14 +94,18 @@ export function CateringApp() {
     const name = nameInput.trim();
     if (!name) return;
     setCreating(true);
+    setError(null);
     try {
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
       const json = await res.json();
-      setActiveEventId(json.event.id);
+      openEvent(json.event.id);
+    } catch (err) {
+      setError(`Couldn't open the event — ${failureText(err)}. Try again.`);
     } finally {
       setCreating(false);
     }
@@ -102,6 +133,11 @@ export function CateringApp() {
     setError(null);
     try {
       const res = await fetch(`/api/events/${activeEventId}/end`, { method: "POST" });
+      if (res.status === 409) {
+        setError("That event was already ended on another device.");
+        mutate();
+        return;
+      }
       if (!res.ok) throw new Error(`server returned ${res.status}`);
       mutate();
     } catch (err) {
@@ -109,13 +145,15 @@ export function CateringApp() {
     }
   }
 
+  // Throws on failure so the modal stays open and shows the error.
   async function submitOrder(selection: OrderSelection) {
     if (!activeEventId) return;
-    await fetch(`/api/events/${activeEventId}/orders`, {
+    const res = await fetch(`/api/events/${activeEventId}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(selection),
     });
+    if (!res.ok) throw new Error(`server returned ${res.status}`);
     setModalItem(null);
     globalMutate(`/api/events/${activeEventId}/orders`);
     globalMutate(`/api/events/${activeEventId}/summary`);
@@ -123,9 +161,9 @@ export function CateringApp() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col bg-cream">
-      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
-        {!activeEventId || !event ? (
-          <div>
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-2">
+        {!activeEventId ? (
+          <div className="py-1">
             <div className="flex gap-2">
               <input
                 value={nameInput}
@@ -146,50 +184,83 @@ export function CateringApp() {
               Past events
             </Link>
           </div>
+        ) : !event ? (
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <p className="text-muted">
+              {loadError ? "Couldn't load the event — retrying…" : "Loading…"}
+            </p>
+            <button
+              type="button"
+              onClick={switchEvent}
+              className="min-h-11 shrink-0 text-sm text-muted underline"
+            >
+              New event
+            </button>
+          </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="w-full min-w-0 sm:w-auto">
-              <div className="truncate font-bold text-espresso">{event.name}</div>
-              <div className="truncate text-xs text-muted">{event.id}</div>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              {elapsed && (
-                <span className="font-mono text-lg font-semibold text-espresso">{elapsed}</span>
-              )}
-              {!event.startTime && (
-                <button
-                  type="button"
-                  onClick={startTimer}
-                  className="min-h-11 shrink-0 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
-                >
-                  Start
-                </button>
-              )}
-              {event.startTime && !event.endTime && (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingEnd(true)}
-                  className="min-h-11 shrink-0 rounded-lg bg-red-600 px-4 py-2 font-medium text-white"
-                >
-                  End
-                </button>
-              )}
-              <Link href="/history" className="text-sm text-muted underline">
-                Past events
-              </Link>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1 truncate font-bold text-espresso">{event.name}</div>
+            {elapsed && (
+              <span className="shrink-0 font-mono text-lg font-semibold text-espresso">
+                {elapsed}
+              </span>
+            )}
+            {!event.startTime && (
               <button
                 type="button"
-                onClick={switchEvent}
-                className="text-sm text-muted underline"
+                onClick={startTimer}
+                className="min-h-11 shrink-0 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
               >
-                New event
+                Start
               </button>
+            )}
+            {event.startTime && !event.endTime && (
+              <button
+                type="button"
+                onClick={() => setConfirmingEnd(true)}
+                className="min-h-11 shrink-0 rounded-lg bg-red-600 px-4 py-2 font-medium text-white"
+              >
+                End
+              </button>
+            )}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((open) => !open)}
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted active:bg-surface"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-xl border border-border bg-white py-1 shadow-lg">
+                    <Link
+                      href="/history"
+                      className="block px-4 py-3 text-espresso active:bg-surface"
+                    >
+                      Past events
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={switchEvent}
+                      className="block w-full px-4 py-3 text-left text-espresso active:bg-surface"
+                    >
+                      New event
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+          <div className="mt-2 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
             <p className="text-sm text-red-700">{error}</p>
             <button
               type="button"
@@ -204,7 +275,7 @@ export function CateringApp() {
 
       {!activeEventId && (
         <main className="flex-1 p-4">
-          <JoinEventList onJoin={setActiveEventId} />
+          <JoinEventList onJoin={openEvent} />
         </main>
       )}
 
@@ -232,19 +303,19 @@ export function CateringApp() {
                   Event has ended. Order entry is closed.
                 </p>
               ) : event.startTime ? (
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {CATEGORIES.map((cat) => (
                     <div key={cat.key}>
-                      <h3 className="mb-2 text-sm font-semibold uppercase text-muted">
+                      <h3 className="mb-1 text-xs font-semibold uppercase text-muted">
                         {cat.label}
                       </h3>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-2">
                         {ITEMS.filter((item) => item.category === cat.key).map((item) => (
                           <button
                             key={item.key}
                             type="button"
                             onClick={() => setModalItem(item.key)}
-                            className="rounded-2xl border-2 border-border bg-white px-2 py-6 text-lg font-semibold text-espresso shadow-sm active:bg-surface"
+                            className="h-24 rounded-2xl border-2 border-border bg-white px-2 text-base leading-tight font-semibold text-espresso shadow-sm active:bg-surface"
                           >
                             {item.label}
                           </button>

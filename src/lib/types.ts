@@ -1,3 +1,5 @@
+import type { MilkKey } from "./menu";
+
 export interface EventRow {
   id: string;
   name: string;
@@ -49,7 +51,7 @@ export interface SummaryResponse {
 }
 
 export interface MilkMaterialRow {
-  key: string;
+  key: MilkKey;
   label: string;
   calculatedOz: number;
   containerOz: number;

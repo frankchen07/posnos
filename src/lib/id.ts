@@ -9,8 +9,13 @@ export function slugify(name: string): string {
     .slice(0, 40) || "event";
 }
 
-export function todayDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+// Events are dated by the Pacific calendar day so an evening event isn't
+// stamped with tomorrow's UTC date.
+const EVENT_TIME_ZONE = "America/Los_Angeles";
+
+export function todayDateString(now = new Date()): string {
+  // en-CA formats as YYYY-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: EVENT_TIME_ZONE }).format(now);
 }
 
 export function buildEventId(name: string, dateString: string): string {

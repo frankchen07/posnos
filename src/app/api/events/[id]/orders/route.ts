@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events, orders } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { ITEMS, MILKS, SYRUPS, buildAbbreviation } from "@/lib/menu";
+import { ITEMS, MILKS, MILK_OPTIONAL_ITEMS, SYRUPS, buildAbbreviation } from "@/lib/menu";
 
 export async function GET(
   _req: NextRequest,
@@ -40,6 +40,9 @@ export async function POST(
       { error: "item and temp are required" },
       { status: 400 }
     );
+  }
+  if (!milk && !MILK_OPTIONAL_ITEMS.includes(item)) {
+    return NextResponse.json({ error: "milk is required for this drink" }, { status: 400 });
   }
 
   const db = getDb();

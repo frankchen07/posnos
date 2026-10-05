@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { itemLabel, milkLabel, syrupLabel } from "@/lib/menu";
+import { milkMaterialKey } from "@/lib/materials";
 import type { MilkMaterialRow, SummaryResponse } from "@/lib/types";
 
 function CountRow({ label, count }: { label: string; count: number }) {
@@ -60,7 +61,7 @@ function MaterialRow({
       const res = await fetch(`/api/events/${eventId}/materials`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ materialKey: `milk_${material.key}`, containersUsed }),
+        body: JSON.stringify({ materialKey: milkMaterialKey(material.key), containersUsed }),
       });
       if (!res.ok) throw new Error("save failed");
       setDirty(false);

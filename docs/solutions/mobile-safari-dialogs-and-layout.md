@@ -82,13 +82,12 @@ Also restore `Escape` to cancel — `window.confirm` did that for free.
 - Repro recipe: WebKit at 375x812, **no** `page.on('dialog')` handler, create event,
   Start, tap End — assert a POST to `/api/events/*/end` actually fires.
 
-## Still open (not fixed here)
+## Follow-ups (fixed 2026-10-05)
 
-- `activeEventId` is `useState` with no persistence, so a reload or any route change
-  drops an in-progress event back to the join screen. Mid-shift on a phone (tab
-  discarded while the screen is locked) this is easy to hit.
-- `POST /api/events/[id]/start` and `/end` overwrite their timestamp unconditionally.
-  They should no-op or 409 when already set; the guard today is client-side only.
-- `createOrJoinEvent` has no `res.ok` check — a 400 from `POST /api/events` makes
-  `json.event.id` throw and the Go button silently un-disables.
-- `order-modal.tsx` still uses `max-h-[92vh]`; `92dvh` is correct on iOS.
+- Active event is persisted in the URL (`?event=<id>`), so a reload or a discarded
+  tab lands back on the event.
+- `POST /api/events/[id]/start` no-ops when already started; `/end` returns 409
+  when already ended. The timestamp guard is now server-side.
+- `createOrJoinEvent` and order submit check `res.ok`; a failed order keeps the
+  modal open with an inline error, and Done is disabled while saving.
+- `order-modal.tsx` uses `92dvh` + safe-area bottom padding.

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events, orders, materialCounts } from "@/db/schema";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
-import { MILKS, type ItemKey, type MilkKey } from "@/lib/menu";
+import { MILKS, type ItemKey } from "@/lib/menu";
 import { MILK_OZ_PER_DRINK, MILK_CONTAINER_OZ, milkMaterialKey } from "@/lib/materials";
 
 export async function GET(
@@ -19,63 +19,60 @@ export async function GET(
 
   const notDeleted = and(eq(orders.eventId, id), eq(orders.deleted, false));
 
-  const byItem = await db
-    .select({ key: orders.item, count: sql<number>`count(*)::int` })
-    .from(orders)
-    .where(notDeleted)
-    .groupBy(orders.item);
-
-  const byMilk = await db
-    .select({ key: orders.milk, count: sql<number>`count(*)::int` })
-    .from(orders)
-    .where(notDeleted)
-    .groupBy(orders.milk);
-
-  const bySyrup = await db
-    .select({ key: orders.syrup, count: sql<number>`count(*)::int` })
-    .from(orders)
-    .where(notDeleted)
-    .groupBy(orders.syrup);
-
-  const byTemp = await db
-    .select({ key: orders.temp, count: sql<number>`count(*)::int` })
-    .from(orders)
-    .where(notDeleted)
-    .groupBy(orders.temp);
-
-  const [totals] = await db
-    .select({
-      total: sql<number>`count(*)::int`,
-      decafCount: sql<number>`count(*) filter (where ${orders.decaf})::int`,
-      boastStyleCount: sql<number>`count(*) filter (where ${orders.boastStyle})::int`,
-      shotsCount: sql<number>`count(*) filter (where ${orders.shotsAdded} > 0)::int`,
-    })
-    .from(orders)
-    .where(notDeleted);
-
-  const byItemMilk = await db
-    .select({
-      item: orders.item,
-      milk: orders.milk,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(orders)
-    .where(and(notDeleted, isNotNull(orders.milk)))
-    .groupBy(orders.item, orders.milk);
-
-  const manualCounts = await db
-    .select({
-      materialKey: materialCounts.materialKey,
-      containersUsed: materialCounts.containersUsed,
-    })
-    .from(materialCounts)
-    .where(eq(materialCounts.eventId, id));
+  const [byItem, byMilk, bySyrup, byTemp, [totals], byItemMilk, manualCounts] =
+    await Promise.all([
+      db
+        .select({ key: orders.item, count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(notDeleted)
+        .groupBy(orders.item),
+      db
+        .select({ key: orders.milk, count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(notDeleted)
+        .groupBy(orders.milk),
+      db
+        .select({ key: orders.syrup, count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(notDeleted)
+        .groupBy(orders.syrup),
+      db
+        .select({ key: orders.temp, count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(notDeleted)
+        .groupBy(orders.temp),
+      db
+        .select({
+          total: sql<number>`count(*)::int`,
+          decafCount: sql<number>`count(*) filter (where ${orders.decaf})::int`,
+          boastStyleCount: sql<number>`count(*) filter (where ${orders.boastStyle})::int`,
+          shotsCount: sql<number>`count(*) filter (where ${orders.shotsAdded} > 0)::int`,
+        })
+        .from(orders)
+        .where(notDeleted),
+      db
+        .select({
+          item: orders.item,
+          milk: orders.milk,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(orders)
+        .where(and(notDeleted, isNotNull(orders.milk)))
+        .groupBy(orders.item, orders.milk),
+      db
+        .select({
+          materialKey: materialCounts.materialKey,
+          containersUsed: materialCounts.containersUsed,
+        })
+        .from(materialCounts)
+        .where(eq(materialCounts.eventId, id)),
+    ]);
   const manualByKey = new Map(
     manualCounts.map((row) => [row.materialKey, Number(row.containersUsed)])
   );
 
   const milkMaterials = MILKS.map((m) => {
-    const key = m.key as MilkKey;
+    const key = m.key;
     const calculatedOz = byItemMilk
       .filter((row) => row.milk === key)
       .reduce(

@@ -17,6 +17,7 @@ import {
   type OrderSelection,
   type Temp,
 } from "@/lib/menu";
+import { failureText } from "@/lib/fetcher";
 
 function OptionButton({
   active,
@@ -49,14 +50,14 @@ export function OrderModal({
 }: {
   itemKey: ItemKey;
   onClose: () => void;
-  onSubmit: (selection: OrderSelection) => void;
+  onSubmit: (selection: OrderSelection) => Promise<void>;
 }) {
   const item = ITEMS.find((i) => i.key === itemKey)!;
-  const showTemp = !(NO_TEMP_ITEMS as readonly string[]).includes(itemKey);
-  const milkRequired = !(MILK_OPTIONAL_ITEMS as readonly string[]).includes(itemKey);
-  const showShots = !(NO_SHOTS_ITEMS as readonly string[]).includes(itemKey);
-  const showMods = !(NO_MODS_ITEMS as readonly string[]).includes(itemKey);
-  const isSweetItem = (SWEET_ITEMS as readonly string[]).includes(itemKey);
+  const showTemp = !NO_TEMP_ITEMS.includes(itemKey);
+  const milkRequired = !MILK_OPTIONAL_ITEMS.includes(itemKey);
+  const showShots = !NO_SHOTS_ITEMS.includes(itemKey);
+  const showMods = !NO_MODS_ITEMS.includes(itemKey);
+  const isSweetItem = SWEET_ITEMS.includes(itemKey);
   const visibleSyrups = SYRUPS.filter((s) => s.key !== "less_sweet" || isSweetItem);
 
   const [temp, setTemp] = useState<Temp>(showTemp ? "hot" : "iced");
@@ -65,6 +66,8 @@ export function OrderModal({
   const [syrup, setSyrup] = useState<SyrupKey | null>(null);
   const [decaf, setDecaf] = useState(false);
   const [boastStyle, setBoastStyle] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selection: OrderSelection = {
     item: itemKey,
@@ -76,16 +79,30 @@ export function OrderModal({
     boastStyle,
   };
   const preview = buildAbbreviation(selection);
+  const needsMilk = milkRequired && !milk;
+
+  async function submit() {
+    if (saving || needsMilk) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await onSubmit(selection);
+    } catch (err) {
+      setError(`Order not saved — ${failureText(err)}. Try again.`);
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-y-auto rounded-t-3xl bg-white p-3 sm:rounded-3xl sm:p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-espresso">{item.label}</h2>
+      <div className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-y-auto rounded-t-3xl bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:rounded-3xl sm:p-6 sm:pb-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="min-w-0 truncate text-xl font-bold text-espresso">{item.label}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-3 py-1 text-xl text-muted"
+            disabled={saving}
+            className="min-h-11 shrink-0 rounded-full px-3 py-1 text-xl text-muted disabled:opacity-40"
           >
             ✕
           </button>
@@ -124,7 +141,7 @@ export function OrderModal({
 
         {showShots && (
           <section className="mt-3">
-            <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Shots</h3>
+            <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Shots</h3>
             <div className="grid grid-cols-3 gap-2">
               {[1, 2].map((n) => (
                 <OptionButton
@@ -132,7 +149,7 @@ export function OrderModal({
                   active={shotsAdded === n}
                   onClick={() => setShotsAdded((cur) => (cur === n ? 0 : n))}
                 >
-                  {n === 1 ? "Extra Single" : "Extra Double"}
+                  {n === 1 ? "+Single" : "+Double"}
                 </OptionButton>
               ))}
             </div>
@@ -141,7 +158,7 @@ export function OrderModal({
 
         <section className="mt-3">
           <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Syrup</h3>
-          <div className="grid grid-cols-3 gap-2">
+          <div className={`grid gap-2 ${visibleSyrups.length > 3 ? "grid-cols-4" : "grid-cols-3"}`}>
             {visibleSyrups.map((s) => (
               <OptionButton
                 key={s.key}
@@ -172,12 +189,15 @@ export function OrderModal({
           {preview}
         </div>
 
+        {error && <p className="mt-2 text-center text-sm text-red-700">{error}</p>}
+
         <button
           type="button"
-          onClick={() => onSubmit(selection)}
-          className="mt-2 w-full rounded-2xl bg-emerald-600 py-4 text-xl font-bold text-white active:bg-emerald-700"
+          onClick={submit}
+          disabled={saving || needsMilk}
+          className="mt-2 w-full rounded-2xl bg-emerald-600 py-4 text-xl font-bold text-white active:bg-emerald-700 disabled:opacity-60"
         >
-          Done
+          {saving ? "Saving…" : needsMilk ? "Pick a milk" : "Done"}
         </button>
       </div>
     </div>
