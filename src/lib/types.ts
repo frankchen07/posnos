@@ -26,6 +26,7 @@ export interface OrderRow {
   syrup: string | null;
   decaf: boolean;
   boastStyle: boolean;
+  sugar: boolean;
   abbreviation: string;
   deleted: boolean;
 }

@@ -10,14 +10,25 @@ const base: OrderSelection = {
   syrup: null,
   decaf: false,
   boastStyle: false,
+  sugar: false,
 };
 
 test("plain drink is just the item abbreviation", () => {
   assert.equal(buildAbbreviation(base), "L");
 });
 
-test("temperature is never written — the cup says it", () => {
-  assert.equal(buildAbbreviation({ ...base, temp: "iced" }), "L");
+test("iced drinks are prefixed ICED so Live shows it", () => {
+  assert.equal(buildAbbreviation({ ...base, temp: "iced" }), "ICED L");
+  assert.equal(buildAbbreviation({ ...base, temp: "iced", milk: "whole", shotsAdded: 1 }), "ICED 2X L / WM");
+});
+
+test("always-iced nitro gets no ICED prefix", () => {
+  assert.equal(buildAbbreviation({ ...base, item: "nitro_cold_brew", temp: "iced" }), "NCB");
+});
+
+test("sugar is its own add-on after syrup", () => {
+  assert.equal(buildAbbreviation({ ...base, sugar: true }), "L / +S");
+  assert.equal(buildAbbreviation({ ...base, syrup: "vanilla", sugar: true }), "L / +V / +S");
 });
 
 test("item codes", () => {
@@ -67,7 +78,8 @@ test("full order: shots+item / milk / syrup / mods", () => {
       syrup: "vanilla",
       decaf: true,
       boastStyle: true,
+      sugar: true,
     }),
-    "4X CAP / O / +V / DECAF / BOAST"
+    "ICED 4X CAP / O / +V / +S / DECAF / BOAST"
   );
 });

@@ -36,6 +36,7 @@ export const orders = pgTable("orders", {
   syrup: text("syrup"),
   decaf: boolean("decaf").notNull().default(false),
   boastStyle: boolean("boast_style").notNull().default(false),
+  sugar: boolean("sugar").notNull().default(false),
   abbreviation: text("abbreviation").notNull(),
   deleted: boolean("deleted").notNull().default(false),
 });

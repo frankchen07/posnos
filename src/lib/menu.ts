@@ -79,6 +79,7 @@ export interface OrderSelection {
   syrup: SyrupKey | null;
   decaf: boolean;
   boastStyle: boolean;
+  sugar: boolean;
 }
 
 export function itemLabel(key: string) {
@@ -95,7 +96,7 @@ export function syrupLabel(key: string | null) {
   return SYRUPS.find((s) => s.key === key)?.label ?? key;
 }
 
-// Temperature is never written — the cup (paper vs plastic) already says it.
+// Iced drinks lead with ICED so Live orders show it; always-iced drinks skip it.
 export function buildAbbreviation(sel: OrderSelection): string {
   const item = ITEMS.find((i) => i.key === sel.item);
   const milk = sel.milk ? MILKS.find((m) => m.key === sel.milk) : null;
@@ -105,13 +106,15 @@ export function buildAbbreviation(sel: OrderSelection): string {
   const itemAbbr = item?.abbr ?? sel.item;
   const shotsPrefixed = sel.shotsAdded > 0 && defaultShots != null;
 
+  const icedPrefix = sel.temp === "iced" && !NO_TEMP_ITEMS.includes(sel.item) ? "ICED " : "";
   const lines: string[] = [
-    shotsPrefixed ? `${defaultShots + sel.shotsAdded}X ${itemAbbr}` : itemAbbr,
+    icedPrefix + (shotsPrefixed ? `${defaultShots + sel.shotsAdded}X ${itemAbbr}` : itemAbbr),
   ];
   if (milk) lines.push(milk.abbr);
   if (sel.shotsAdded > 0 && !shotsPrefixed) lines.push(`+${sel.shotsAdded} Shot`);
   // Less Sweet takes syrup away, so it gets no plus.
   if (syrup) lines.push(syrup.key === "less_sweet" ? syrup.abbr : `+${syrup.abbr}`);
+  if (sel.sugar) lines.push("+S");
   if (sel.decaf) lines.push("DECAF");
   if (sel.boastStyle) lines.push("BOAST");
   return lines.join(" / ");

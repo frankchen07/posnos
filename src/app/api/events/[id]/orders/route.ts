@@ -34,6 +34,7 @@ export async function POST(
   const shotsAdded = Number.isInteger(body.shotsAdded) ? body.shotsAdded : 0;
   const decaf = Boolean(body.decaf);
   const boastStyle = Boolean(body.boastStyle);
+  const sugar = Boolean(body.sugar);
 
   if (!item || !temp) {
     return NextResponse.json(
@@ -84,6 +85,7 @@ export async function POST(
     syrup,
     decaf,
     boastStyle,
+    sugar,
   });
 
   const [order] = await db
@@ -99,6 +101,7 @@ export async function POST(
       syrup,
       decaf,
       boastStyle,
+      sugar,
       abbreviation,
     })
     .returning();

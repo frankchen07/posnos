@@ -66,6 +66,7 @@ export function OrderModal({
   const [syrup, setSyrup] = useState<SyrupKey | null>(null);
   const [decaf, setDecaf] = useState(false);
   const [boastStyle, setBoastStyle] = useState(false);
+  const [sugar, setSugar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +78,7 @@ export function OrderModal({
     syrup,
     decaf,
     boastStyle,
+    sugar,
   };
   const preview = buildAbbreviation(selection);
   const needsMilk = milkRequired && !milk;
@@ -158,7 +160,7 @@ export function OrderModal({
 
         <section className="mt-3">
           <h3 className="mb-1 text-sm font-semibold uppercase text-muted">Extra Syrup</h3>
-          <div className={`grid gap-2 ${visibleSyrups.length > 3 ? "grid-cols-4" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 ${visibleSyrups.length > 3 ? "grid-cols-5 [&>button]:px-1 [&>button]:text-sm" : "grid-cols-4"}`}>
             {visibleSyrups.map((s) => (
               <OptionButton
                 key={s.key}
@@ -168,6 +170,9 @@ export function OrderModal({
                 {`+${s.label}`}
               </OptionButton>
             ))}
+            <OptionButton active={sugar} onClick={() => setSugar((v) => !v)}>
+              +Sugar
+            </OptionButton>
           </div>
         </section>
 
