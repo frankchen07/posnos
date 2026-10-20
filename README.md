@@ -11,6 +11,7 @@ Next.js App Router + Drizzle on Neon Postgres. Built for an iPhone in Safari.
 ```bash
 npm install
 echo 'DATABASE_URL=postgres://…' > .env.local   # Neon connection string
+echo 'POSNOS_PASSWORD=…' >> .env.local          # shared login password (app is locked without it)
 npm run db:push                                  # sync src/db/schema.ts to the database
 npm run dev
 ```
