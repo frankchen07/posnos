@@ -59,3 +59,20 @@ export interface MilkMaterialRow {
   calculatedContainers: number;
   manualContainers: number | null;
 }
+
+export interface MilkUsage {
+  containers: number;
+  // true when no actual count was entered and the value is oz-per-drink math
+  estimated: boolean;
+}
+
+export interface EventTrend {
+  id: string;
+  name: string;
+  // normalized dateless name shared by recurring events, e.g. "coopelectric"
+  series: string;
+  seriesLabel: string;
+  eventDate: string;
+  cups: number;
+  milk: Record<MilkKey, MilkUsage>;
+}

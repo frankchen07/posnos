@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events, orders, materialCounts } from "@/db/schema";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
-import { MILKS, type ItemKey } from "@/lib/menu";
-import { MILK_OZ_PER_DRINK, MILK_CONTAINER_OZ, milkMaterialKey } from "@/lib/materials";
+import { MILKS } from "@/lib/menu";
+import { MILK_CONTAINER_OZ, calculatedMilkOz, milkMaterialKey } from "@/lib/materials";
 
 export async function GET(
   _req: NextRequest,
@@ -73,12 +73,7 @@ export async function GET(
 
   const milkMaterials = MILKS.map((m) => {
     const key = m.key;
-    const calculatedOz = byItemMilk
-      .filter((row) => row.milk === key)
-      .reduce(
-        (sum, row) => sum + row.count * (MILK_OZ_PER_DRINK[row.item as ItemKey] ?? 0),
-        0
-      );
+    const calculatedOz = calculatedMilkOz(byItemMilk, key);
     const containerOz = MILK_CONTAINER_OZ[key];
     const materialKey = milkMaterialKey(key);
     return {

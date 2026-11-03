@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events, orders, materialCounts } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { stripNameDate } from "@/lib/event-name";
 
 export async function GET(
   _req: NextRequest,
@@ -22,7 +23,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const name = typeof body.name === "string" ? stripNameDate(body.name) : "";
   if (!name) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }

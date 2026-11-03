@@ -73,9 +73,14 @@ export function EventHistory() {
       <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-espresso">Past Events</h1>
-          <Link href="/" className="text-sm text-muted underline">
-            Back
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/trends" className="text-sm text-muted underline">
+              Trends
+            </Link>
+            <Link href="/" className="text-sm text-muted underline">
+              Back
+            </Link>
+          </div>
         </div>
 
         {error && (

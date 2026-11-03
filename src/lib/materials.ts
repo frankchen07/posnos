@@ -28,3 +28,12 @@ export const MILK_CONTAINER_OZ: Record<MilkKey, number> = {
 export function milkMaterialKey(milk: MilkKey): string {
   return `milk_${milk}`;
 }
+
+export function calculatedMilkOz(
+  rows: { item: string; milk: string | null; count: number }[],
+  milk: MilkKey
+): number {
+  return rows
+    .filter((row) => row.milk === milk)
+    .reduce((sum, row) => sum + row.count * (MILK_OZ_PER_DRINK[row.item as ItemKey] ?? 0), 0);
+}
