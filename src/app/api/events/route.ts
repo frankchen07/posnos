@@ -3,7 +3,6 @@ import { getDb } from "@/db";
 import { events, orders } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { buildEventId, todayDateString } from "@/lib/id";
-import { stripNameDate } from "@/lib/event-name";
 
 export async function GET() {
   const db = getDb();
@@ -28,7 +27,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const name = typeof body.name === "string" ? stripNameDate(body.name) : "";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
