@@ -5,7 +5,6 @@ import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { MILKS } from "@/lib/menu";
-import { MILK_CONTAINER_OZ } from "@/lib/materials";
 import { filterTrends, type TrendRange } from "@/lib/trends";
 import type { EventTrend } from "@/lib/types";
 
@@ -223,15 +222,12 @@ export function TrendsView() {
                 </section>
 
                 <section>
-                  <h3 className="text-sm font-semibold uppercase text-muted">Milk Containers Used</h3>
-                  <p className="mb-2 text-xs text-muted">Solid = counted · dashed ~ = calculated</p>
+                  <h3 className="mb-2 text-sm font-semibold uppercase text-muted">Milk Containers Used</h3>
                   <div className="overflow-x-auto">
                     <div className="w-max space-y-3">
                       {MILKS.map((m) => (
                         <div key={m.key}>
-                          <div className="sticky left-0 w-max text-sm text-espresso">
-                            {m.label} <span className="text-muted">· {MILK_CONTAINER_OZ[m.key]}oz</span>
-                          </div>
+                          <div className="sticky left-0 w-max text-sm text-espresso">{m.label}</div>
                           <Bars
                             columns={columns}
                             value={(c) => {
